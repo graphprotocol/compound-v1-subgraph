@@ -14,8 +14,9 @@ type MoneyMarket @entity {
 # marketLiquidity, and sponsirEquity from front end calls
 type Market @entity {
     id: ID! # asset address
-    isSupported: Boolean
-    isSuspended: Boolean # not part of main struct, must get from event (note, has never been emitted)
+    assetName: String!
+    isSupported: Boolean!
+    isSuspended: Boolean! # not part of main struct, must get from event (note, has never been emitted)
     blockNumber: BigInt! # block number it is updated to, or last block this market was interacted with
     interestRateModel: Bytes! # address of the interestRateModel contract
     totalSupply: BigInt!
@@ -37,10 +38,12 @@ type User @entity {
 type Asset @entity {
     id: ID! # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.............)
     user: Bytes! # user address for look up
-    supplyPrincipal: BigInt!
-    supplyInterestIndex: BigInt!
-    borrowPrincipal: BigInt!
-    borrowInterestIndex: BigInt!
+    supplyPrincipal: BigInt
+    supplyInterest: BigInt # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
+    supplyInterestIndex: BigInt
+    borrowPrincipal: BigInt
+    borrowInterest: BigInt # is only updated to the last event, event BorrowTaken and event BorrowRepaid
+    borrowInterestIndex: BigInt
     transactionHashes: [Bytes!]! # this is for the app, it shows every tx that has happened
 }
 
