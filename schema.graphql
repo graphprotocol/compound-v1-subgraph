@@ -30,7 +30,7 @@ type Market @entity {
 
 type User @entity {
     id: ID! # user eth address
-    assets: [Assets!]! @derivedFrom(field: "user")
+    assets: [Asset!]! @derivedFrom(field: "user")
 }
 
 # no way to get interest accured, that is part of the front end

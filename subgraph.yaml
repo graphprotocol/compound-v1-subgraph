@@ -5,25 +5,45 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Example
+    name: MoneyMarket
     network: mainnet
     source:
-      address: ''
-      abi: Example
+      address: '0x3FDA67f7583380E67ef93072294a7fAc882FD7E7' # Mainnet: 0x3FDA67f7583380E67ef93072294a7fAc882FD7E7 Rinkeby: 0x61bbd7bd5ee2a202d7e62519750170a52a8dfd45
+      abi: MoneyMarket
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.1
       language: wasm/assemblyscript
-      file: ./src/mappings/example.ts
+      file: ./src/mappings/moneyMarket.ts
       entities:
-        - Example
+        - MoneyMarket
+        - Market
+        - User
+        - Asset
       abis:
-        - name: Example
-          file: ./abis/Example.json
+        - name: MoneyMarket
+          file: ./abis/moneyMarket.json
       eventHandlers:
-        - event: Example()
-          handler: handleExample
-
+        - event: SupplyReceived(address,address,uint256,uint256,uint256)
+          handler: handleSupplyReceived
+        - event: SupplyWithdrawn(address,address,uint256,uint256,uint256)
+          handler: handleSupplyWithdrawn
+        - event: BorrowTaken(address,address,uint256,uint256,uint256,uint256)
+          handler: handleBorrowTaken
+        - event: BorrowRepaid(address,address,uint256,uint256,uint256)
+          handler: handleBorrowRepaid
+        - event: BorrowLiquidated(address,address,uint256,uint256,uint256,uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleBorrowLiquidated
+        - event: SupportedMarket(address,address)
+          handler: handleSupportedMarket
+        - event: SuspendedMarket(address)
+          handler: handleSuspendedMarket
+        - event: NewRiskParameters(uint256,uint256,uint256,uint256)
+          handler: handleNewRiskParameters
+        - event: NewOriginationFee(uint256,uint256)
+          handler: handleNewOriginationFee
+        - event: SetMarketInterestRateModel(address,address)
+          handler: handleSetMarketInterestRateModel
 
 
 
