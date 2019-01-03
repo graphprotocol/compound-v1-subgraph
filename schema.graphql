@@ -1,4 +1,47 @@
-#type Example @entity {
-#    id: ID!
-#    example: Bytes!
-#}
+# Some high level values that are changed by governance
+# Gross borrow and Gross supply can be solved with Javascript front end
+type MoneyMarket @entity {
+    id: ID! # just set to 1
+
+    # Event NewRiskParameters (called once upon launch)
+    collateralRatioMantissa: BigInt! # 1.5x needed
+    liquidationDiscountMantissa: BigInt! #liquidating user gets your 5%
+
+    # Event NewOriginationFee (called once upon launch)
+    originationFeeMantissa: BigInt! # 0.25% to instantiate a borrow
+}
+
+# marketLiquidity, and sponsirEquity from front end calls
+type Market @entity {
+    id: ID! # asset address
+    isSupported: Boolean
+    isSuspended: Boolean # not part of main struct, must get from event (note, has never been emitted)
+    blockNumber: BigInt! # block number it is updated to, or last block this market was interacted with
+    interestRateModel: Bytes! # address of the interestRateModel contract
+    totalSupply: BigInt!
+    supplyRateMantissa: BigInt! #apr
+    supplyIndex: BigInt!
+    totalBorrows: BigInt!
+    borrowRateMantissa: BigInt! #apr
+    borrowIndex: BigInt!
+
+    # AT THE END OF EACH CALL , THIS SHOULD BE STATICALLY CALLED. or else at least for the liqudity event
+}
+
+type User @entity {
+    id: ID! # user eth address
+    assets: [Assets!]! @derivedFrom(field: "user")
+}
+
+# no way to get interest accured, that is part of the front end
+type Asset @entity {
+    id: ID! # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.............)
+    user: Bytes! # user address for look up
+    supplyPrincipal: BigInt!
+    supplyInterestIndex: BigInt!
+    borrowPrincipal: BigInt!
+    borrowInterestIndex: BigInt!
+    transactionHashes: [Bytes!]! # this is for the app, it shows every tx that has happened
+}
+
+
