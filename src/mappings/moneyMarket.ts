@@ -19,11 +19,14 @@ import {
   Asset
 } from '../types/schema'
 
+// TODO - rename supplyInterest and borrowInterest to reflec tthe fact they are calculated , and not live with the dapp
+// TODO - rename it to supplyInterestLastChange. then have a section totalInterestEarned, which adds the interest from each round
+// TODO - ensure that indexs are cumulatively recorded
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
   let user = User.load(id)
-  if (user == null){
+  if (user == null) {
     user = new User(id)
   }
 
@@ -35,23 +38,24 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
-  if (asset == null){
+  if (asset == null) {
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
   }
   asset.user = event.params.account
   asset.supplyPrincipal = event.params.newBalance
+
+  // For sure works, I checked. Note that the interest earned resets on every tx in the Dapp
   asset.supplyInterest = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
-  // need to get the supplyIndexInterest
+  // need to get the supplyInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
   let supplyBalance = moneyMarketContract.supplyBalances(event.params.account, assetAddress)
-  let supplyIndexInterest = supplyBalance.value1
-  asset.supplyInterestIndex = supplyIndexInterest
+  asset.supplyInterestIndex = supplyBalance.value1
 
   asset.save()
 
@@ -91,7 +95,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
 
   // Unexpectedly this is needed. Assumption is that a user liquidates another user, and then withdraws the clamined collateral, and in this case the asset was never created in the deposit case
   // TODO - double check this is needed. i.e. comment it out and test it again
-  if (asset == null){
+  if (asset == null) {
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
   }
@@ -99,17 +103,17 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   asset.supplyPrincipal = event.params.newBalance
 
   // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
+  // For sure works, i checked live
   asset.supplyInterest = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
-  // need to get the supplyIndexInterest
+  // need to get the supplyInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
   let supplyBalance = moneyMarketContract.supplyBalances(event.params.account, assetAddress)
-  let supplyIndexInterest = supplyBalance.value1
-  asset.supplyInterestIndex = supplyIndexInterest
+  asset.supplyInterestIndex = supplyBalance.value1
 
   asset.save()
 
@@ -145,23 +149,23 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
-  if (asset == null){
+  if (asset == null) {
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
   }
   asset.user = event.params.account
   asset.borrowPrincipal = event.params.newBalance
+  // For sure works
   asset.borrowInterest = event.params.newBalance.minus(event.params.borrowAmountWithFee).minus(event.params.startingBalance)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
-  // need to get the borrowIndexInterest
+  // need to get the borrowInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
   let borrowBalance = moneyMarketContract.borrowBalances(event.params.account, assetAddress)
-  let borrowIndexInterest = borrowBalance.value1
-  asset.supplyInterestIndex = borrowIndexInterest
+  asset.borrowInterestIndex = borrowBalance.value1
 
   asset.save()
 
@@ -206,17 +210,17 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
   asset.borrowPrincipal = event.params.newBalance
 
   // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
+  // For sure works I checked
   asset.borrowInterest = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
-  // need to get the borrowIndexInterest
+  // need to get the borrowInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
   let borrowBalance = moneyMarketContract.borrowBalances(event.params.account, assetAddress)
-  let borrowIndexInterest = borrowBalance.value1
-  asset.supplyInterestIndex = borrowIndexInterest
+  asset.borrowInterestIndex = borrowBalance.value1
 
   asset.save()
 
@@ -330,18 +334,36 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   market.borrowRateMantissa = BigInt.fromI32(0)
   market.borrowIndex = BigInt.fromI32(0)
 
-  if (id == "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359") {
-    market.assetName = "DAI"
-  } else if (id == "0x1985365e9f78359a9b6ad760e32412f4a445e862") {
-    market.assetName = "REP"
-  } else if (id == "0x0d8775f648430679a709e98d2b0cb6250d2887ef") {
-    market.assetName = "BAT"
-  } else if (id == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
-    market.assetName = "WETH"
-  } else if (id == "0xe41d2489571d322189246dafa5ebde1f4699f498") {
-    market.assetName = "ZRX"
+  // First check if it is the mainnet address
+  if (event.address.toHex() == "0x3fda67f7583380e67ef93072294a7fac882fd7e7") {
+    if (id == "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359") {
+      market.assetName = "DAI"
+    } else if (id == "0x1985365e9f78359a9b6ad760e32412f4a445e862") {
+      market.assetName = "REP"
+    } else if (id == "0x0d8775f648430679a709e98d2b0cb6250d2887ef") {
+      market.assetName = "BAT"
+    } else if (id == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
+      market.assetName = "WETH"
+    } else if (id == "0xe41d2489571d322189246dafa5ebde1f4699f498") {
+      market.assetName = "ZRX"
+    } else {
+      market.assetName = "Unknown" // Note - if multiple Unknowns, they will overwrite each other, which isn't good.
+    }
+    // Else it is Rinkeby, and must match the rinkeby addresses
   } else {
-    market.assetName = "Unknown"
+    if (id == "0x4e17c87c52d0e9a0cad3fbc53b77d9514f003807") {
+      market.assetName = "DAI"
+    } else if (id == "0x930b647320f738d92f5647b2e5c4458497ce3c95") {
+      market.assetName = "REP"
+    } else if (id == "0xbf7bbeef6c56e53f79de37ee9ef5b111335bd2ab") {
+      market.assetName = "BAT"
+    } else if (id == "0xc778417e063141139fce010982780140aa0cd5ab") {
+      market.assetName = "WETH"
+    } else if (id == "0x8de2f821bc97979b7171e7a6fe065b9e17f73b87") {
+      market.assetName = "ZRX"
+    } else {
+      market.assetName = "Unknown"
+    }
   }
   market.save()
 }
