@@ -1,4 +1,4 @@
-import {BigInt, ByteArray} from '@graphprotocol/graph-ts'
+import {BigInt} from '@graphprotocol/graph-ts'
 import {
   BorrowLiquidated,
   BorrowRepaid,
@@ -17,12 +17,11 @@ import {
   MoneyMarket as MoneyMarketEntity,
   User,
   Asset
-
 } from '../types/schema'
+
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
-
   let user = User.load(id)
   if (user == null){
     user = new User(id)
@@ -48,6 +47,12 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
+  // need to get the supplyIndexInterest
+  let moneyMarketContract = MoneyMarket.bind(event.address)
+  let supplyBalance = moneyMarketContract.supplyBalances(event.params.account, assetAddress)
+  let supplyIndexInterest = supplyBalance.value1
+  asset.supplyInterestIndex = supplyIndexInterest
+
   asset.save()
 
   // Call into the contract getter and update market
@@ -62,11 +67,8 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   market.borrowIndex = updatedMarket.value8
 
   market.save()
-
-
 }
 
-// todo - make big number clearly numbers, not in wei, so it is readable
 
 export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   let id = event.params.account.toHex()
@@ -85,17 +87,29 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
+
+
+  // Unexpectedly this is needed. Assumption is that a user liquidates another user, and then withdraws the clamined collateral, and in this case the asset was never created in the deposit case
+  // TODO - double check this is needed. i.e. comment it out and test it again
   if (asset == null){
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
   }
   asset.user = event.params.account
   asset.supplyPrincipal = event.params.newBalance
-  asset.supplyInterest = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
+
+  // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
+  asset.supplyInterest = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
+
+  // need to get the supplyIndexInterest
+  let moneyMarketContract = MoneyMarket.bind(event.address)
+  let supplyBalance = moneyMarketContract.supplyBalances(event.params.account, assetAddress)
+  let supplyIndexInterest = supplyBalance.value1
+  asset.supplyInterestIndex = supplyIndexInterest
 
   asset.save()
 
@@ -113,6 +127,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   market.save()
 }
 
+// Note - borrowFeeTaken adds to the total borrowed amount that needs to be repaid, but it doesnt actually add to what the user borrows. thats why doTransferOut() uses the normal borrowed amount. and that is why the interest calculated is newBalance - borrowAmountWithFee - startingBalance
 export function handleBorrowTaken(event: BorrowTaken): void {
   let id = event.params.account.toHex()
 
@@ -141,6 +156,12 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
+
+  // need to get the borrowIndexInterest
+  let moneyMarketContract = MoneyMarket.bind(event.address)
+  let borrowBalance = moneyMarketContract.borrowBalances(event.params.account, assetAddress)
+  let borrowIndexInterest = borrowBalance.value1
+  asset.supplyInterestIndex = borrowIndexInterest
 
   asset.save()
 
@@ -175,17 +196,27 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
-  if (asset == null){
-    asset = new Asset(assetUserID)
-    asset.transactionHashes = []
-  }
+
+  // not needed, already exists if repaid
+  // if (asset == null){
+  //   asset = new Asset(assetUserID)
+  //   asset.transactionHashes = []
+  // }
   asset.user = event.params.account
   asset.borrowPrincipal = event.params.newBalance
-  asset.borrowInterest = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
+
+  // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
+  asset.borrowInterest = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
+
+  // need to get the borrowIndexInterest
+  let moneyMarketContract = MoneyMarket.bind(event.address)
+  let borrowBalance = moneyMarketContract.borrowBalances(event.params.account, assetAddress)
+  let borrowIndexInterest = borrowBalance.value1
+  asset.supplyInterestIndex = borrowIndexInterest
 
   asset.save()
 
@@ -206,6 +237,81 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
 
 // Updates the borrowing market and the collateral market
 export function handleBorrowLiquidated(event: BorrowLiquidated): void {
+
+  let borrowMarketID = event.params.assetBorrow.toHex()
+  let collateralMarketID = event.params.assetCollateral.toHex()
+  let moneyMarketContract = MoneyMarket.bind(event.address)
+  let borrowMarket = Market.load(borrowMarketID)
+  let collateralMarket = Market.load(collateralMarketID)
+
+  ///// UPDATING USER ASSETS BELOW /////
+
+  let borrowAssetName = borrowMarket.assetName
+  let borrowAssetTargetAccountID = borrowAssetName.concat("-".concat(event.params.targetAccount.toHex()))
+
+  // access contract storage - borrowBalances[targetAccount][event.params.assetBorrow]
+  let borrowAssetTarget = Asset.load(borrowAssetTargetAccountID)
+  let updatedBorrowTargetBalance = moneyMarketContract.borrowBalances(event.params.targetAccount, event.params.assetBorrow)
+  let updatedBorrowAssetTargetPrincipal = updatedBorrowTargetBalance.value0
+  let updatedBorrowAssetTargetInterestIndex = updatedBorrowTargetBalance.value1
+  borrowAssetTarget.borrowPrincipal = updatedBorrowAssetTargetPrincipal
+  borrowAssetTarget.borrowInterestIndex = updatedBorrowAssetTargetInterestIndex
+
+  borrowAssetTarget.save()
+
+  let collateralAssetName = collateralMarket.assetName
+  let collateralAssetTargetAccountID = collateralAssetName.concat("-".concat(event.params.targetAccount.toHex()))
+
+  // access contract storage - supplyBalances[targetAccount][event.params.assetCollateral]
+  let collateralAssetTarget = Asset.load(collateralAssetTargetAccountID)
+  let updatedCollateralSupplyTargetBalance = moneyMarketContract.supplyBalances(event.params.targetAccount, event.params.assetCollateral)
+  let updatedCollateralSupplyTargetPrincipal = updatedCollateralSupplyTargetBalance.value0
+  let updatedCollateralSupplyTargetInterestIndex = updatedCollateralSupplyTargetBalance.value1
+  collateralAssetTarget.supplyPrincipal = updatedCollateralSupplyTargetPrincipal
+  collateralAssetTarget.supplyInterestIndex = updatedCollateralSupplyTargetInterestIndex
+
+  collateralAssetTarget.save()
+
+  let collateralAssetLiquidatorAccountID = collateralAssetName.concat("-".concat(event.params.liquidator.toHex()))
+
+  // access contract storage - supplyBalances[event.params.liquidator][event.params.assetCollateral]
+  let collateralAssetLiquidator = Asset.load(collateralAssetLiquidatorAccountID)
+
+  // need to consider, because it is possible the liquidator never interacted with the asset before in the money market
+  if (collateralAssetLiquidator == null) {
+    collateralAssetLiquidator = new Asset(collateralAssetLiquidatorAccountID)
+    collateralAssetLiquidator.transactionHashes = []
+  }
+  let updatedCollateralSupplyLiquidatorBalance = moneyMarketContract.supplyBalances(event.params.liquidator, event.params.assetCollateral)
+  let updatedCollateralSupplyLiquidatorPrincipal = updatedCollateralSupplyLiquidatorBalance.value0
+  let updatedCollateralSupplyLiquidatorInterestIndex = updatedCollateralSupplyLiquidatorBalance.value1
+  collateralAssetLiquidator.supplyPrincipal = updatedCollateralSupplyLiquidatorPrincipal
+  collateralAssetLiquidator.supplyInterestIndex = updatedCollateralSupplyLiquidatorInterestIndex
+
+  collateralAssetLiquidator.save()
+
+  ///// UPDATING MARKETS BELOW /////
+
+  let updatedBorrowMarket = moneyMarketContract.markets(event.params.assetBorrow)
+  borrowMarket.blockNumber = event.block.number
+  borrowMarket.totalBorrows = updatedBorrowMarket.value6
+  borrowMarket.supplyRateMantissa = updatedBorrowMarket.value4
+  borrowMarket.supplyIndex = updatedBorrowMarket.value5
+  borrowMarket.borrowRateMantissa = updatedBorrowMarket.value7
+  borrowMarket.borrowIndex = updatedBorrowMarket.value8
+  // note, borrowMarket total supply not updated by this event! see the contract
+
+  borrowMarket.save()
+
+
+  let updatedCollateralMarket = moneyMarketContract.markets(event.params.assetCollateral)
+  collateralMarket.blockNumber = event.block.number
+  collateralMarket.totalSupply = updatedCollateralMarket.value3
+  collateralMarket.supplyIndex = updatedCollateralMarket.value5
+  collateralMarket.borrowIndex = updatedCollateralMarket.value8
+  // note, other collateral market values not updated by this event! see the contract
+
+  collateralMarket.save()
 
 }
 
@@ -247,7 +353,6 @@ export function handleSuspendedMarket(event: SuspendedMarket): void {
   market.isSuspended = true
 
   market.save()
-
 }
 
 export function handleNewRiskParameters(event: NewRiskParameters): void {

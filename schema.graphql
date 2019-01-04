@@ -1,32 +1,32 @@
-# Some high level values that are changed by governance
-# Gross borrow and Gross supply can be solved with Javascript front end
+# MoneyMarket contains high level values that are changed by governance
+# Dapp note - Gross borrow and Gross supply can be solved with Javascript front end
 type MoneyMarket @entity {
     id: ID! # just set to 1
 
-    # Event NewRiskParameters (called once upon launch)
-    collateralRatioMantissa: BigInt! # 1.5x needed
-    liquidationDiscountMantissa: BigInt! #liquidating user gets your 5%
+    # Event NewRiskParameters
+    collateralRatioMantissa: BigInt!        # 1.5x needed
+    liquidationDiscountMantissa: BigInt!    # liquidating user gets your 5%
 
-    # Event NewOriginationFee (called once upon launch)
-    originationFeeMantissa: BigInt! # 0.25% to instantiate a borrow
+    # Event NewOriginationFee
+    originationFeeMantissa: BigInt!         # 0.25% to instantiate a borrow
 }
 
-# marketLiquidity, and sponsirEquity from front end calls
+# Dapp note - marketLiquidity, and sponsorEquity must come from front end calls
+# Note that the Mantissas are the per block return on an asset borrowed/supplied
 type Market @entity {
-    id: ID! # asset address
+    id: ID!                     # asset address
     assetName: String!
     isSupported: Boolean!
-    isSuspended: Boolean! # not part of main struct, must get from event (note, has never been emitted)
-    blockNumber: BigInt! # block number it is updated to, or last block this market was interacted with
-    interestRateModel: Bytes! # address of the interestRateModel contract
-    totalSupply: BigInt!
-    supplyRateMantissa: BigInt! #apr
-    supplyIndex: BigInt!
-    totalBorrows: BigInt!
-    borrowRateMantissa: BigInt! #apr
-    borrowIndex: BigInt!
+    isSuspended: Boolean!       # not part of main struct, must get from event (note, has never been emitted)
+    blockNumber: BigInt!        # block number it is updated to, or last block this market was interacted with
+    interestRateModel: Bytes!   # address of the interestRateModel contract
+    totalSupply: BigInt!        # includes all decimal points. Usually 10^-18, but not always
+    supplyRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18
+    supplyIndex: BigInt!        # The history of the markets index return since inception. (Think S&P 500)
+    totalBorrows: BigInt!       # includes all decimal points. Usually 10^-18, but not always
+    borrowRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18
+    borrowIndex: BigInt!        # The history of the markets index return since inception. (Think S&P 500)
 
-    # AT THE END OF EACH CALL , THIS SHOULD BE STATICALLY CALLED. or else at least for the liqudity event
 }
 
 type User @entity {
@@ -34,17 +34,16 @@ type User @entity {
     assets: [Asset!]! @derivedFrom(field: "user")
 }
 
-# no way to get interest accured, that is part of the front end
 type Asset @entity {
-    id: ID! # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.............)
-    user: Bytes! # user address for look up
+    id: ID!                         # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.......)
+    user: Bytes!                    # user address for look up
     supplyPrincipal: BigInt
-    supplyInterest: BigInt # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
-    supplyInterestIndex: BigInt
+    supplyInterest: BigInt          # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
+    supplyInterestIndex: BigInt     # The users personal return in supplying the asset (5.23% would be 1.05230 * 10^18)
     borrowPrincipal: BigInt
-    borrowInterest: BigInt # is only updated to the last event, event BorrowTaken and event BorrowRepaid
-    borrowInterestIndex: BigInt
-    transactionHashes: [Bytes!]! # this is for the app, it shows every tx that has happened
+    borrowInterest: BigInt          # is only updated to the last event, event BorrowTaken and event BorrowRepaid
+    borrowInterestIndex: BigInt     # The users personal total return in borrowing this asset
+    transactionHashes: [Bytes!]!    # this is for the app, it shows every tx that has happened
 }
 
 
