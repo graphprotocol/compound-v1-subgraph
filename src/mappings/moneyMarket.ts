@@ -2,7 +2,7 @@ import {BigInt, ByteArray} from '@graphprotocol/graph-ts'
 import {
   BorrowLiquidated,
   BorrowRepaid,
-  BorrowTaken,
+  BorrowTaken, MoneyMarket,
   NewOriginationFee,
   NewRiskParameters,
   SetMarketInterestRateModel,
@@ -50,23 +50,161 @@ export function handleSupplyReceived(event: SupplyReceived): void {
 
   asset.save()
 
-  // TODO call into the contract getter and update market
+  // Call into the contract getter and update market
+  let marketContract = MoneyMarket.bind(event.address)
+  let updatedMarket = marketContract.markets(assetAddress)
+  market.blockNumber = event.block.number
+  market.totalSupply = updatedMarket.value3
+  market.supplyRateMantissa = updatedMarket.value4
+  market.supplyIndex = updatedMarket.value5
+  market.totalBorrows = updatedMarket.value6
+  market.borrowRateMantissa = updatedMarket.value7
+  market.borrowIndex = updatedMarket.value8
+
+  market.save()
+
 
 }
 
-// TODO - do similar for the next three, what I did above
-export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
+// todo - make big number clearly numbers, not in wei, so it is readable
 
+export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
+  let id = event.params.account.toHex()
+
+  // not needed, because user exists if they are withdrawing
+  // let user = User.load(id)
+  // if (user == null){
+  //   user = new User(id)
+  // }
+  //
+  // user.save()
+
+  let assetAddress = event.params.asset
+  let market = Market.load(assetAddress.toHex())
+  let assetName = market.assetName
+  let assetUserID = assetName.concat("-".concat(id))
+
+  let asset = Asset.load(assetUserID)
+  if (asset == null){
+    asset = new Asset(assetUserID)
+    asset.transactionHashes = []
+  }
+  asset.user = event.params.account
+  asset.supplyPrincipal = event.params.newBalance
+  asset.supplyInterest = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
+
+  let txHashes = asset.transactionHashes
+  txHashes.push(event.transaction.hash)
+  asset.transactionHashes = txHashes
+
+  asset.save()
+
+  // Call into the contract getter and update market
+  let marketContract = MoneyMarket.bind(event.address)
+  let updatedMarket = marketContract.markets(assetAddress)
+  market.blockNumber = event.block.number
+  market.totalSupply = updatedMarket.value3
+  market.supplyRateMantissa = updatedMarket.value4
+  market.supplyIndex = updatedMarket.value5
+  market.totalBorrows = updatedMarket.value6
+  market.borrowRateMantissa = updatedMarket.value7
+  market.borrowIndex = updatedMarket.value8
+
+  market.save()
 }
 
 export function handleBorrowTaken(event: BorrowTaken): void {
+  let id = event.params.account.toHex()
 
+  // not needed, because user exists if they are borrowing, since they need supplying as collateral
+  // let user = User.load(id)
+  // if (user == null){
+  //   user = new User(id)
+  // }
+  //
+  // user.save()
+
+  let assetAddress = event.params.asset
+  let market = Market.load(assetAddress.toHex())
+  let assetName = market.assetName
+  let assetUserID = assetName.concat("-".concat(id))
+
+  let asset = Asset.load(assetUserID)
+  if (asset == null){
+    asset = new Asset(assetUserID)
+    asset.transactionHashes = []
+  }
+  asset.user = event.params.account
+  asset.borrowPrincipal = event.params.newBalance
+  asset.borrowInterest = event.params.newBalance.minus(event.params.borrowAmountWithFee).minus(event.params.startingBalance)
+
+  let txHashes = asset.transactionHashes
+  txHashes.push(event.transaction.hash)
+  asset.transactionHashes = txHashes
+
+  asset.save()
+
+  // Call into the contract getter and update market
+  let marketContract = MoneyMarket.bind(event.address)
+  let updatedMarket = marketContract.markets(assetAddress)
+  market.blockNumber = event.block.number
+  market.totalSupply = updatedMarket.value3
+  market.supplyRateMantissa = updatedMarket.value4
+  market.supplyIndex = updatedMarket.value5
+  market.totalBorrows = updatedMarket.value6
+  market.borrowRateMantissa = updatedMarket.value7
+  market.borrowIndex = updatedMarket.value8
+
+  market.save()
 }
 
 export function handleBorrowRepaid(event: BorrowRepaid): void {
+  let id = event.params.account.toHex()
+
+  // not needed, because user exists if they are borrowing, since they need supplying as collateral
+  // let user = User.load(id)
+  // if (user == null){
+  //   user = new User(id)
+  // }
+  //
+  // user.save()
+
+  let assetAddress = event.params.asset
+  let market = Market.load(assetAddress.toHex())
+  let assetName = market.assetName
+  let assetUserID = assetName.concat("-".concat(id))
+
+  let asset = Asset.load(assetUserID)
+  if (asset == null){
+    asset = new Asset(assetUserID)
+    asset.transactionHashes = []
+  }
+  asset.user = event.params.account
+  asset.borrowPrincipal = event.params.newBalance
+  asset.borrowInterest = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
+
+  let txHashes = asset.transactionHashes
+  txHashes.push(event.transaction.hash)
+  asset.transactionHashes = txHashes
+
+  asset.save()
+
+  // Call into the contract getter and update market
+  let marketContract = MoneyMarket.bind(event.address)
+  let updatedMarket = marketContract.markets(assetAddress)
+  market.blockNumber = event.block.number
+  market.totalSupply = updatedMarket.value3
+  market.supplyRateMantissa = updatedMarket.value4
+  market.supplyIndex = updatedMarket.value5
+  market.totalBorrows = updatedMarket.value6
+  market.borrowRateMantissa = updatedMarket.value7
+  market.borrowIndex = updatedMarket.value8
+
+  market.save()
 
 }
 
+// Updates the borrowing market and the collateral market
 export function handleBorrowLiquidated(event: BorrowLiquidated): void {
 
 }
