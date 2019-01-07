@@ -90,14 +90,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
-
-
-  // Unexpectedly this is needed. Assumption is that a user liquidates another user, and then withdraws the clamined collateral, and in this case the asset was never created in the deposit case
-  // TODO - double check this is needed. i.e. comment it out and test it again
-  if (asset == null) {
-    asset = new Asset(assetUserID)
-    asset.transactionHashes = []
-  }
+  
   asset.user = event.params.account
   asset.supplyPrincipal = event.params.newBalance
 
