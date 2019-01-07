@@ -19,9 +19,7 @@ import {
   Asset
 } from '../types/schema'
 
-// TODO - rename supplyInterest and borrowInterest to reflec tthe fact they are calculated , and not live with the dapp
-// TODO - rename it to supplyInterestLastChange. then have a section totalInterestEarned, which adds the interest from each round
-// TODO - ensure that indexs are cumulatively recorded
+// Note - each time a tx hanppens, the interest earned resets. so it is worth it to add in the ability to have adding up of the real interest to see what you have earned
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
@@ -46,7 +44,8 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   asset.supplyPrincipal = event.params.newBalance
 
   // For sure works, I checked. Note that the interest earned resets on every tx in the Dapp
-  asset.supplyInterest = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
+  asset.supplyInterestLastChange = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
+  asset.totalSupplyInterest = asset.supplyInterestLastChange.plus(asset.totalSupplyInterest as BigInt)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
@@ -104,7 +103,8 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
 
   // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
   // For sure works, i checked live
-  asset.supplyInterest = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
+  asset.supplyInterestLastChange = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
+  asset.totalSupplyInterest = asset.supplyInterestLastChange.plus(asset.totalSupplyInterest as BigInt)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
@@ -156,7 +156,8 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   asset.user = event.params.account
   asset.borrowPrincipal = event.params.newBalance
   // For sure works
-  asset.borrowInterest = event.params.newBalance.minus(event.params.borrowAmountWithFee).minus(event.params.startingBalance)
+  asset.borrowInterestLastChange = event.params.newBalance.minus(event.params.borrowAmountWithFee).minus(event.params.startingBalance)
+  asset.totalBorrowInterest = asset.borrowInterestLastChange.plus(asset.totalBorrowInterest as BigInt)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
@@ -211,7 +212,8 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
 
   // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
   // For sure works I checked
-  asset.borrowInterest = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
+  asset.borrowInterestLastChange = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
+  asset.totalBorrowInterest = asset.borrowInterestLastChange.plus(asset.totalBorrowInterest as BigInt)
 
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)

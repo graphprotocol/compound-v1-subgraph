@@ -38,10 +38,12 @@ type Asset @entity {
     id: ID!                         # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.......)
     user: Bytes!                    # user address for look up
     supplyPrincipal: BigInt
-    supplyInterest: BigInt          # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
+    supplyInterestLastChange: BigInt          # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
+    totalSupplyInterest: BigInt     # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract
     supplyInterestIndex: BigInt     # The users personal return in supplying the asset (5.23% would be 1.05230 * 10^18)
     borrowPrincipal: BigInt
-    borrowInterest: BigInt          # is only updated to the last event, event BorrowTaken and event BorrowRepaid
+    borrowInterestLastChange: BigInt          # is only updated to the last event, event BorrowTaken and event BorrowRepaid
+    totalBorrowInterest: BigInt     # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract
     borrowInterestIndex: BigInt     # The users personal total return in borrowing this asset
     transactionHashes: [Bytes!]!    # this is for the app, it shows every tx that has happened
 }
