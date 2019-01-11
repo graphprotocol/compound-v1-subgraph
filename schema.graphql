@@ -20,12 +20,12 @@ type Market @entity {
     isSuspended: Boolean!       # not part of main struct, must get from event (note, has never been emitted)
     blockNumber: BigInt!        # block number it is updated to, or last block this market was interacted with
     interestRateModel: Bytes!   # address of the interestRateModel contract
-    totalSupply: BigInt!        # includes all decimal points. Usually 10^-18, but not always
+    totalSupply: BigInt!        # includes all decimal points. Usually 10^-18, but not always, depends on how many decimal places the asset has
     supplyRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18
-    supplyIndex: BigInt!        # The history of the markets index return since inception. (Think S&P 500)
+    supplyIndex: BigInt!        # The history of the markets supplyindex return since inception. (Think S&P 500)
     totalBorrows: BigInt!       # includes all decimal points. Usually 10^-18, but not always
-    borrowRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18
-    borrowIndex: BigInt!        # The history of the markets index return since inception. (Think S&P 500)
+    borrowRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18, but not always, depends on how many decimal places the asset has
+    borrowIndex: BigInt!        # The history of the markets borrow index return since inception. (Think S&P 500)
 
 }
 
@@ -35,17 +35,17 @@ type User @entity {
 }
 
 type Asset @entity {
-    id: ID!                         # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.......)
-    user: Bytes!                    # user address for look up
+    id: ID!                             # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.......)
+    user: Bytes!                        # user address for look up
     supplyPrincipal: BigInt
-    supplyInterestLastChange: BigInt          # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
-    totalSupplyInterest: BigInt     # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract
-    supplyInterestIndex: BigInt     # The users personal return in supplying the asset (5.23% would be 1.05230 * 10^18)
+    supplyInterestLastChange: BigInt    # is only updated to the last event, event SupplyReceived and event SupplyWithdrawn
+    totalSupplyInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (actual asset value, not a percentage)
+    supplyInterestIndex: BigInt         # The users personal return in supplying the asset (5.23% would be 1.05230 * 10^18)
     borrowPrincipal: BigInt
-    borrowInterestLastChange: BigInt          # is only updated to the last event, event BorrowTaken and event BorrowRepaid
-    totalBorrowInterest: BigInt     # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract
-    borrowInterestIndex: BigInt     # The users personal total return in borrowing this asset
-    transactionHashes: [Bytes!]!    # this is for the app, it shows every tx that has happened
+    borrowInterestLastChange: BigInt    # is only updated to the last event, event BorrowTaken and event BorrowRepaid
+    totalBorrowInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (actual asset value, not a percentage)
+    borrowInterestIndex: BigInt         # The users personal total return in borrowing this asset
+    transactionHashes: [Bytes!]!        # this is for the app, it shows every tx that has happened
 }
 
 
