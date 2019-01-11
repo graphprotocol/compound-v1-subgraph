@@ -77,7 +77,41 @@ The query below shows all the information that is possible to query, but is limi
 
 ```
 {
-
+  moneyMarkets{
+    collateralRatioMantissa
+    liquidationDiscountMantissa
+    originationFeeMantissa
+  }
+  markets(orderBy: assetName){
+    id
+    assetName
+    isSupported
+    isSuspended
+    blockNumber
+    interestRateModel
+    totalSupply
+    supplyRateMantissa
+    supplyIndex
+    totalBorrows
+    borrowRateMantissa
+    borrowIndex
+  }
+  users(first: 5){
+    id
+    assets{
+      id
+      user
+      supplyPrincipal
+      supplyInterestLastChange
+      totalSupplyInterest
+      supplyInterestIndex
+      borrowPrincipal
+      borrowInterestLastChange
+      totalBorrowInterest
+      borrowInterestIndex
+      transactionHashes
+    }
+  }
 }
 
 ```
