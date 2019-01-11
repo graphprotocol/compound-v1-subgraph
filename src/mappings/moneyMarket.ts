@@ -356,11 +356,26 @@ export function handleSupportedMarket(event: SupportedMarket): void {
       market.assetName = "WETH"
     } else if (id == "0x8de2f821bc97979b7171e7a6fe065b9e17f73b87") {
       market.assetName = "ZRX"
+    } else if (id == "0x55080ac40700bde5725d8a87f48a01e192f660af") {
+      market.assetName = "KNC" // Note, rinkeby has KyberNetworkCrystal, but it doesn't show up in the Dapp UI
     } else {
       market.assetName = "Unknown"
     }
   }
   market.save()
+
+
+  // On Rinkeby, this needs to be created, since handleNewOriginationFee and handleNewRiskParameters are never called
+  let moneyMarket = MoneyMarketEntity.load("1")
+  if (moneyMarket == null) {
+    moneyMarket = new MoneyMarketEntity("1")
+    let moneyMarketContract = MoneyMarket.bind(event.address)
+    moneyMarket.originationFeeMantissa = moneyMarketContract.originationFee()
+    moneyMarket.collateralRatioMantissa = moneyMarketContract.collateralRatio()
+    moneyMarket.liquidationDiscountMantissa = moneyMarketContract.liquidationDiscount()
+    moneyMarket.save()
+  }
+
 }
 
 export function handleSuspendedMarket(event: SuspendedMarket): void {
