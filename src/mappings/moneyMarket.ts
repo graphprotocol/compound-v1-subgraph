@@ -2,7 +2,8 @@ import {BigInt} from '@graphprotocol/graph-ts'
 import {
   BorrowLiquidated,
   BorrowRepaid,
-  BorrowTaken, MoneyMarket,
+  BorrowTaken,
+  MoneyMarket,
   NewOriginationFee,
   NewRiskParameters,
   SetMarketInterestRateModel,
@@ -19,7 +20,7 @@ import {
   Asset
 } from '../types/schema'
 
-// Note - each time a tx hanppens, the interest earned resets. so it is worth it to add in the ability to have adding up of the real interest to see what you have earned
+// Note - each time a tx hanppens, the interest earned resets.
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
@@ -35,15 +36,17 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   let assetName = market.assetName
   let assetUserID = assetName.concat("-".concat(id))
 
+  // Must load the asset, and create it if it doesn't exist yet
   let asset = Asset.load(assetUserID)
   if (asset == null) {
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
   }
+
   asset.user = event.params.account
   asset.supplyPrincipal = event.params.newBalance
 
-  // For sure works, I checked. Note that the interest earned resets on every tx in the Dapp
+  // For sure works, I checked. Note that the interest earned resets on every tx in the Dapp. This number is only up to date with the most recent transaction
   asset.supplyInterestLastChange = event.params.newBalance.minus(event.params.amount).minus(event.params.startingBalance)
   asset.totalSupplyInterest = asset.supplyInterestLastChange.plus(asset.totalSupplyInterest as BigInt)
 
@@ -51,7 +54,7 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
-  // need to get the supplyInterestIndex
+  // need to get the supplyInterestIndex, so we call the contract directly with MoneyMarket.bind()
   let moneyMarketContract = MoneyMarket.bind(event.address)
   let supplyBalance = moneyMarketContract.supplyBalances(event.params.account, assetAddress)
   asset.supplyInterestIndex = supplyBalance.value1
@@ -76,14 +79,6 @@ export function handleSupplyReceived(event: SupplyReceived): void {
 export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   let id = event.params.account.toHex()
 
-  // not needed, because user exists if they are withdrawing
-  // let user = User.load(id)
-  // if (user == null){
-  //   user = new User(id)
-  // }
-  //
-  // user.save()
-
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
   let assetName = market.assetName
@@ -95,7 +90,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   asset.supplyPrincipal = event.params.newBalance
 
   // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
-  // For sure works, i checked live
+  // For sure works, I checked. Note that the interest earned resets on every tx in the Dapp. This number is only up to date with the most recent transaction
   asset.supplyInterestLastChange = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
   asset.totalSupplyInterest = asset.supplyInterestLastChange.plus(asset.totalSupplyInterest as BigInt)
 
@@ -128,14 +123,6 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
 export function handleBorrowTaken(event: BorrowTaken): void {
   let id = event.params.account.toHex()
 
-  // not needed, because user exists if they are borrowing, since they need supplying as collateral
-  // let user = User.load(id)
-  // if (user == null){
-  //   user = new User(id)
-  // }
-  //
-  // user.save()
-
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
   let assetName = market.assetName
@@ -148,7 +135,6 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   }
   asset.user = event.params.account
   asset.borrowPrincipal = event.params.newBalance
-  // For sure works
   asset.borrowInterestLastChange = event.params.newBalance.minus(event.params.borrowAmountWithFee).minus(event.params.startingBalance)
   asset.totalBorrowInterest = asset.borrowInterestLastChange.plus(asset.totalBorrowInterest as BigInt)
 
@@ -180,14 +166,6 @@ export function handleBorrowTaken(event: BorrowTaken): void {
 export function handleBorrowRepaid(event: BorrowRepaid): void {
   let id = event.params.account.toHex()
 
-  // not needed, because user exists if they are borrowing, since they need supplying as collateral
-  // let user = User.load(id)
-  // if (user == null){
-  //   user = new User(id)
-  // }
-  //
-  // user.save()
-
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
   let assetName = market.assetName
@@ -195,16 +173,10 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
 
   let asset = Asset.load(assetUserID)
 
-  // not needed, already exists if repaid
-  // if (asset == null){
-  //   asset = new Asset(assetUserID)
-  //   asset.transactionHashes = []
-  // }
   asset.user = event.params.account
   asset.borrowPrincipal = event.params.newBalance
 
   // NOTE - updated formula here to newbalance + amount - startingBalance (stated wrong in contract file)
-  // For sure works I checked
   asset.borrowInterestLastChange = event.params.newBalance.plus(event.params.amount).minus(event.params.startingBalance)
   asset.totalBorrowInterest = asset.borrowInterestLastChange.plus(asset.totalBorrowInterest as BigInt)
 
@@ -388,7 +360,7 @@ export function handleSuspendedMarket(event: SuspendedMarket): void {
 }
 
 export function handleNewRiskParameters(event: NewRiskParameters): void {
-  let id = "1"
+  let id = "1" // we only have one MoneyMarket, so just use id "1"
   let moneyMarket = MoneyMarketEntity.load(id)
   if (moneyMarket == null) {
     moneyMarket = new MoneyMarketEntity(id)

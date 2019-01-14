@@ -77,40 +77,50 @@ The query below shows all the information that is possible to query, but is limi
 
 ```
 {
-  moneyMarkets{
-    collateralRatioMantissa
-    liquidationDiscountMantissa
-    originationFeeMantissa
-  }
-  markets(orderBy: assetName){
+	listings{
     id
-    assetName
-    isSupported
-    isSuspended
-    blockNumber
-    interestRateModel
-    totalSupply
-    supplyRateMantissa
-    supplyIndex
-    totalBorrows
-    borrowRateMantissa
-    borrowIndex
-  }
-  users(first: 5){
-    id
-    assets{
+    seller
+    depositManager
+    ipfsHashes
+    offers{
       id
-      user
-      supplyPrincipal
-      supplyInterestLastChange
-      totalSupplyInterest
-      supplyInterestIndex
-      borrowPrincipal
-      borrowInterestLastChange
-      totalBorrowInterest
-      borrowInterestIndex
-      transactionHashes
+      listingID
+      value
+      commission
+      refund
+      ipfsHashes
+      currency
+      buyer
+      affiliate
+      arbitrator
+      finalizes
+      status
+      ipfsData{
+        id
+        offerID
+      }
+      offerExtraData{
+        id
+        offerID
+        sender
+        ipfsHash
+      }
+      disputer
+      ruling
+      eventStatus
+      extraOfferCount
     }
+    ipfsData{
+      id
+      listingID
+    }
+    listingExtraData{
+      id
+      listingID
+      sender
+      ipfsHash
+    }
+    status
   }
 }
 
