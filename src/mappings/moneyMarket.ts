@@ -20,7 +20,7 @@ import {
   Asset
 } from '../types/schema'
 
-// Note - each time a tx hanppens, the interest earned resets.
+// Note - each time a tx happens, the interest earned resets.
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
@@ -338,6 +338,7 @@ export function handleSupportedMarket(event: SupportedMarket): void {
 
 
   // On Rinkeby, this needs to be created, since handleNewOriginationFee and handleNewRiskParameters are never called
+  // Conceivable on future launched markets too
   let moneyMarket = MoneyMarketEntity.load("1")
   if (moneyMarket == null) {
     moneyMarket = new MoneyMarketEntity("1")

@@ -1,17 +1,15 @@
 {
-  "name": "compound-subgraph",
+  "name": "compound",
   "version": "1.0.0",
   "repository": "https://github.com/graphprotocol/compound-subgraph",
   "license": "MIT",
   "scripts": {
     "codegen": "graph codegen --output-dir src/types/ subgraph.yaml",
-    "create-subgraph": "graph create compound-subgraph --node http://127.0.0.1:8020",
+    "create-subgraph": "graph create compound --node http://127.0.0.1:8020",
     "build": "graph build subgraph.yaml",
-    "build-ipfs": "graph build --ipfs /ip4/127.0.0.1/tcp/5001 subgraph.yaml",
+    "build-ipfs": "graph build --ipfs http://localhost:5001 subgraph.yaml",
     "build-wast": "graph build -t wast subgraph.yaml",
-    "deploy": "graph deploy compound-subgraph --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
-    "deploy-hosted": "graph deploy --debug graphprotocol/compound --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/ --access-token <ENTER_ACCESS_TOKEN>",
-    "deploy-staging": "graph deploy --debug davekaj/compound --ipfs https://api.staging.thegraph.com/ipfs/api/v0/ --node https://api.staging.thegraph.com/deploy/ --access-token <ENTER_ACCESS_TOKEN>"
+    "deploy": "graph deploy compound --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "https://github.com/graphprotocol/graph-cli",
