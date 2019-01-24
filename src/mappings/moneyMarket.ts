@@ -314,7 +314,7 @@ export function handleSupportedMarket(event: SupportedMarket): void {
     } else if (id == "0xe41d2489571d322189246dafa5ebde1f4699f498") {
       market.assetName = "ZRX"
     } else {
-      market.assetName = "Unknown" // Note - if multiple Unknowns, they will overwrite each other, which isn't good.
+      market.assetName = "Unknown".concat('-').concat(event.address.toHex()) // concatenation of unknown and address, so they don't overwrite each other
     }
     // Else it is Rinkeby, and must match the rinkeby addresses
   } else {
@@ -331,7 +331,7 @@ export function handleSupportedMarket(event: SupportedMarket): void {
     } else if (id == "0x55080ac40700bde5725d8a87f48a01e192f660af") {
       market.assetName = "KNC" // Note, rinkeby has KyberNetworkCrystal, but it doesn't show up in the Dapp UI
     } else {
-      market.assetName = "Unknown"
+      market.assetName = "Unknown".concat('-').concat(event.address.toHex())
     }
   }
   market.save()
