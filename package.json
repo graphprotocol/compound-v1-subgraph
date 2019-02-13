@@ -1,5 +1,5 @@
 {
-  "name": "graphprotocol/compound",
+  "name": "compound-subgraph",
   "version": "1.0.0",
   "repository": "https://github.com/graphprotocol/compound-subgraph",
   "license": "MIT",
