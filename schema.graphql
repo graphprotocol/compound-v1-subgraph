@@ -37,7 +37,9 @@ type Market @entity {
 type User @entity {
     id: ID!                                         # user eth address
     assets: [Asset!]! @derivedFrom(field: "user")   # derivedFrom will allow all Asset entities to show up for the User
-    accountLiquidity: BigInt
+    accountLiquidity: BigInt!                       # note - account liqidity is how much ETH available to be collaterailzed, but keep in mind it still needs to meet the 150%. So 150 ETH would mean if you borrowed 100, it would go to 0 for liquidity. Can calculate accountLiquidity with the following, but we just hit the smart contract getter instead: values.value1.minus(values.value2.times(BigInt.fromI32(15).div(BigInt.fromI32(10))))
+    totalSupplyInEth: BigInt!
+    totalBorrowInEth: BigInt!
 }
 
 # An Asset represents a User's ownership of the asset in one of the Markets

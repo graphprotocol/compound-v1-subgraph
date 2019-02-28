@@ -76,6 +76,9 @@ export function handleSupplyReceived(event: SupplyReceived): void {
 
   let user = new User(id)
   user.accountLiquidity = marketContract.getAccountLiquidity(event.params.account)
+  let values = marketContract.calculateAccountValues(event.params.account)
+  user.totalSupplyInEth = values.value1
+  user.totalBorrowInEth = values.value2
   user.save()
 }
 
@@ -115,6 +118,9 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
 
   let user = new User(id)
   user.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.account)
+  let values = moneyMarketContract.calculateAccountValues(event.params.account)
+  user.totalSupplyInEth = values.value1
+  user.totalBorrowInEth = values.value2
   user.save()
 
   // Call into the contract getter and update market
@@ -168,6 +174,9 @@ export function handleBorrowTaken(event: BorrowTaken): void {
 
   let user = new User(id)
   user.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.account)
+  let values = moneyMarketContract.calculateAccountValues(event.params.account)
+  user.totalSupplyInEth = values.value1
+  user.totalBorrowInEth = values.value2
   user.save()
 
   // Call into the contract getter and update market
@@ -218,6 +227,9 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
 
   let user = new User(id)
   user.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.account)
+  let values = moneyMarketContract.calculateAccountValues(event.params.account)
+  user.totalSupplyInEth = values.value1
+  user.totalBorrowInEth = values.value2
   user.save()
 
   // Call into the contract getter and update market
@@ -274,6 +286,9 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
 
   let targetUser = new User(event.params.targetAccount.toHex())
   targetUser.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.targetAccount)
+  let targetValues = moneyMarketContract.calculateAccountValues(event.params.targetAccount)
+  targetUser.totalSupplyInEth = targetValues.value1
+  targetUser.totalBorrowInEth = targetValues.value2
   targetUser.save()
 
   let collateralAssetLiquidatorAccountID = collateralAssetName.concat("-".concat(event.params.liquidator.toHex()))
@@ -296,6 +311,9 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
   collateralAssetLiquidator.save()
 
   let liquidatorUser = new User(event.params.liquidator.toHex())
+  let liquidatorValues = moneyMarketContract.calculateAccountValues(event.params.liquidator)
+  liquidatorUser.totalSupplyInEth = liquidatorValues.value1
+  liquidatorUser.totalBorrowInEth = liquidatorValues.value2
   liquidatorUser.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.liquidator)
   liquidatorUser.save()
 
