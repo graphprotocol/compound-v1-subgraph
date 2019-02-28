@@ -66,10 +66,10 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   let updatedMarket = marketContract.markets(assetAddress)
   market.blockNumber = event.block.number
   market.totalSupply = updatedMarket.value3
-  market.supplyRateMantissa = updatedMarket.value4
+  market.perBlockSupplyInterest = updatedMarket.value4
   market.supplyIndex = updatedMarket.value5
   market.totalBorrows = updatedMarket.value6
-  market.borrowRateMantissa = updatedMarket.value7
+  market.perBlockBorrowInterest = updatedMarket.value7
   market.borrowIndex = updatedMarket.value8
 
   market.save()
@@ -110,10 +110,10 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   let updatedMarket = marketContract.markets(assetAddress)
   market.blockNumber = event.block.number
   market.totalSupply = updatedMarket.value3
-  market.supplyRateMantissa = updatedMarket.value4
+  market.perBlockSupplyInterest = updatedMarket.value4
   market.supplyIndex = updatedMarket.value5
   market.totalBorrows = updatedMarket.value6
-  market.borrowRateMantissa = updatedMarket.value7
+  market.perBlockBorrowInterest = updatedMarket.value7
   market.borrowIndex = updatedMarket.value8
 
   market.save()
@@ -154,10 +154,10 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   let updatedMarket = marketContract.markets(assetAddress)
   market.blockNumber = event.block.number
   market.totalSupply = updatedMarket.value3
-  market.supplyRateMantissa = updatedMarket.value4
+  market.perBlockSupplyInterest = updatedMarket.value4
   market.supplyIndex = updatedMarket.value5
   market.totalBorrows = updatedMarket.value6
-  market.borrowRateMantissa = updatedMarket.value7
+  market.perBlockBorrowInterest = updatedMarket.value7
   market.borrowIndex = updatedMarket.value8
 
   market.save()
@@ -196,10 +196,10 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
   let updatedMarket = marketContract.markets(assetAddress)
   market.blockNumber = event.block.number
   market.totalSupply = updatedMarket.value3
-  market.supplyRateMantissa = updatedMarket.value4
+  market.perBlockSupplyInterest = updatedMarket.value4
   market.supplyIndex = updatedMarket.value5
   market.totalBorrows = updatedMarket.value6
-  market.borrowRateMantissa = updatedMarket.value7
+  market.perBlockBorrowInterest = updatedMarket.value7
   market.borrowIndex = updatedMarket.value8
 
   market.save()
@@ -266,9 +266,9 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
   let updatedBorrowMarket = moneyMarketContract.markets(event.params.assetBorrow)
   borrowMarket.blockNumber = event.block.number
   borrowMarket.totalBorrows = updatedBorrowMarket.value6
-  borrowMarket.supplyRateMantissa = updatedBorrowMarket.value4
+  borrowMarket.perBlockSupplyInterest = updatedBorrowMarket.value4
   borrowMarket.supplyIndex = updatedBorrowMarket.value5
-  borrowMarket.borrowRateMantissa = updatedBorrowMarket.value7
+  borrowMarket.perBlockBorrowInterest = updatedBorrowMarket.value7
   borrowMarket.borrowIndex = updatedBorrowMarket.value8
   // note, borrowMarket total supply not updated by this event! see the contract
 
@@ -295,10 +295,10 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   market.isSuspended = false
   market.blockNumber = event.block.number
   market.totalSupply = BigInt.fromI32(0)
-  market.supplyRateMantissa = BigInt.fromI32(0)
+  market.perBlockSupplyInterest = BigInt.fromI32(0)
   market.supplyIndex = BigInt.fromI32(0)
   market.totalBorrows = BigInt.fromI32(0)
-  market.borrowRateMantissa = BigInt.fromI32(0)
+  market.perBlockBorrowInterest = BigInt.fromI32(0)
   market.borrowIndex = BigInt.fromI32(0)
   market.priceInWei = BigInt.fromI32(0)
 
@@ -344,9 +344,10 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   if (moneyMarket == null) {
     moneyMarket = new MoneyMarketEntity("1")
     let moneyMarketContract = MoneyMarket.bind(event.address)
-    moneyMarket.originationFeeMantissa = moneyMarketContract.originationFee()
-    moneyMarket.collateralRatioMantissa = moneyMarketContract.collateralRatio()
-    moneyMarket.liquidationDiscountMantissa = moneyMarketContract.liquidationDiscount()
+    moneyMarket.originationFee = moneyMarketContract.originationFee()
+    moneyMarket.collateralRatio = moneyMarketContract.collateralRatio()
+    moneyMarket.liquidationDiscount = moneyMarketContract.liquidationDiscount()
+    moneyMarket.blocksPerYear = 2102400
     moneyMarket.save()
   }
 
@@ -366,11 +367,13 @@ export function handleNewRiskParameters(event: NewRiskParameters): void {
   let moneyMarket = MoneyMarketEntity.load(id)
   if (moneyMarket == null) {
     moneyMarket = new MoneyMarketEntity(id)
-    moneyMarket.originationFeeMantissa = BigInt.fromI32(0)
+    moneyMarket.originationFee = BigInt.fromI32(0)
+    moneyMarket.blocksPerYear = 2102400
+
   }
 
-  moneyMarket.collateralRatioMantissa = event.params.newCollateralRatioMantissa
-  moneyMarket.liquidationDiscountMantissa = event.params.newLiquidationDiscountMantissa
+  moneyMarket.collateralRatio = event.params.newCollateralRatioMantissa
+  moneyMarket.liquidationDiscount = event.params.newLiquidationDiscountMantissa
 
   moneyMarket.save()
 }
@@ -380,11 +383,12 @@ export function handleNewOriginationFee(event: NewOriginationFee): void {
   let moneyMarket = MoneyMarketEntity.load(id)
   if (moneyMarket == null) {
     moneyMarket = new MoneyMarketEntity(id)
-    moneyMarket.collateralRatioMantissa = BigInt.fromI32(0)
-    moneyMarket.liquidationDiscountMantissa = BigInt.fromI32(0)
+    moneyMarket.collateralRatio = BigInt.fromI32(0)
+    moneyMarket.liquidationDiscount = BigInt.fromI32(0)
+    moneyMarket.blocksPerYear = 2102400
   }
 
-  moneyMarket.originationFeeMantissa = event.params.newOriginationFeeMantissa
+  moneyMarket.originationFee = event.params.newOriginationFeeMantissa
 
   moneyMarket.save()
 }

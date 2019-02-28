@@ -27,19 +27,19 @@ export function handlePricePosted(event: PricePosted): void {
   let dai = Market.load(daiID)
 
   // TODO - delete this its temp for testing
-  // if (dai == null){
-  //   dai = new Market(daiID)
-  //   dai.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
-  //   dai.isSupported = true
-  //   dai.isSuspended = false
-  //   dai.blockNumber = event.block.number
-  //   dai.totalSupply = BigInt.fromI32(0)
-  //   dai.supplyRateMantissa = BigInt.fromI32(0)
-  //   dai.supplyIndex = BigInt.fromI32(0)
-  //   dai.totalBorrows = BigInt.fromI32(0)
-  //   dai.borrowRateMantissa = BigInt.fromI32(0)
-  //   dai.borrowIndex = BigInt.fromI32(0)
-  // }
+  if (dai == null){
+    dai = new Market(daiID)
+    dai.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
+    dai.isSupported = true
+    dai.isSuspended = false
+    dai.blockNumber = event.block.number
+    dai.totalSupply = BigInt.fromI32(0)
+    dai.perBlockSupplyInterest = BigInt.fromI32(0)
+    dai.supplyIndex = BigInt.fromI32(0)
+    dai.totalBorrows = BigInt.fromI32(0)
+    dai.perBlockBorrowInterest = BigInt.fromI32(0)
+    dai.borrowIndex = BigInt.fromI32(0)
+  }
 
   let oracleContract = PriceOracle.bind(event.address)
   dai.priceInWei = oracleContract.getPrice(Address.fromString(daiID))
@@ -49,19 +49,19 @@ export function handlePricePosted(event: PricePosted): void {
   let market = Market.load(id)
 
   // TODO - delete this its temp for testing
-  // if (market == null){
-  //   market = new Market(id)
-  //   market.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
-  //   market.isSupported = true
-  //   market.isSuspended = false
-  //   market.blockNumber = event.block.number
-  //   market.totalSupply = BigInt.fromI32(0)
-  //   market.supplyRateMantissa = BigInt.fromI32(0)
-  //   market.supplyIndex = BigInt.fromI32(0)
-  //   market.totalBorrows = BigInt.fromI32(0)
-  //   market.borrowRateMantissa = BigInt.fromI32(0)
-  //   market.borrowIndex = BigInt.fromI32(0)
-  // }
+  if (market == null){
+    market = new Market(id)
+    market.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
+    market.isSupported = true
+    market.isSuspended = false
+    market.blockNumber = event.block.number
+    market.totalSupply = BigInt.fromI32(0)
+    market.perBlockSupplyInterest = BigInt.fromI32(0)
+    market.supplyIndex = BigInt.fromI32(0)
+    market.totalBorrows = BigInt.fromI32(0)
+    market.perBlockBorrowInterest = BigInt.fromI32(0)
+    market.borrowIndex = BigInt.fromI32(0)
+  }
 
   if (id == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"){
     market.priceInWei = BigInt.fromI32(100000).times(BigInt.fromI32(100000).times(BigInt.fromI32(100000)))
@@ -77,19 +77,19 @@ export function handleCappedPricePosted(event: CappedPricePosted): void {
   let dai = Market.load(daiID)
 
   // TODO - delete this its temp for testing
-  // if (dai == null){
-  //   dai = new Market(daiID)
-  //   dai.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
-  //   dai.isSupported = true
-  //   dai.isSuspended = false
-  //   dai.blockNumber = event.block.number
-  //   dai.totalSupply = BigInt.fromI32(0)
-  //   dai.supplyRateMantissa = BigInt.fromI32(0)
-  //   dai.supplyIndex = BigInt.fromI32(0)
-  //   dai.totalBorrows = BigInt.fromI32(0)
-  //   dai.borrowRateMantissa = BigInt.fromI32(0)
-  //   dai.borrowIndex = BigInt.fromI32(0)
-  // }
+  if (dai == null){
+    dai = new Market(daiID)
+    dai.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
+    dai.isSupported = true
+    dai.isSuspended = false
+    dai.blockNumber = event.block.number
+    dai.totalSupply = BigInt.fromI32(0)
+    dai.perBlockSupplyInterest = BigInt.fromI32(0)
+    dai.supplyIndex = BigInt.fromI32(0)
+    dai.totalBorrows = BigInt.fromI32(0)
+    dai.perBlockBorrowInterest = BigInt.fromI32(0)
+    dai.borrowIndex = BigInt.fromI32(0)
+  }
 
   let oracleContract = PriceOracle.bind(event.address)
   dai.priceInWei = oracleContract.getPrice(Address.fromString(daiID))
@@ -99,19 +99,19 @@ export function handleCappedPricePosted(event: CappedPricePosted): void {
   let market = Market.load(id)
 
   // TODO - delete this its temp for testing
-  // if (market == null){
-  //   market = new Market(id)
-  //   market.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
-  //   market.isSupported = true
-  //   market.isSuspended = false
-  //   market.blockNumber = event.block.number
-  //   market.totalSupply = BigInt.fromI32(0)
-  //   market.supplyRateMantissa = BigInt.fromI32(0)
-  //   market.supplyIndex = BigInt.fromI32(0)
-  //   market.totalBorrows = BigInt.fromI32(0)
-  //   market.borrowRateMantissa = BigInt.fromI32(0)
-  //   market.borrowIndex = BigInt.fromI32(0)
-  // }
+  if (market == null){
+    market = new Market(id)
+    market.interestRateModel = Address.fromString("0x0000000000000000000000000000000000000000")
+    market.isSupported = true
+    market.isSuspended = false
+    market.blockNumber = event.block.number
+    market.totalSupply = BigInt.fromI32(0)
+    market.perBlockSupplyInterest = BigInt.fromI32(0)
+    market.supplyIndex = BigInt.fromI32(0)
+    market.totalBorrows = BigInt.fromI32(0)
+    market.perBlockBorrowInterest = BigInt.fromI32(0)
+    market.borrowIndex = BigInt.fromI32(0)
+  }
 
   if (id == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"){
     market.priceInWei = BigInt.fromI32(100000).times(BigInt.fromI32(100000).times(BigInt.fromI32(100000)))

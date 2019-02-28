@@ -5,11 +5,13 @@ type MoneyMarket @entity {
     id: ID! # just set to 1
 
     # Event NewRiskParameters
-    collateralRatioMantissa: BigInt!        # 1.5x needed
-    liquidationDiscountMantissa: BigInt!    # liquidating user gets your 5%
+    collateralRatio: BigInt!        # 1.5x needed
+    liquidationDiscount: BigInt!    # liquidating user gets your 5%
 
     # Event NewOriginationFee
-    originationFeeMantissa: BigInt!         # 0.25% to instantiate a borrow
+    originationFee: BigInt!         # 0.25% to instantiate a borrow
+
+    blocksPerYear: Int!             # 2102400 - use this to find APR by multiplying by perBlockBorrowInterest and perBlockSupplyIntererst
 }
 
 # Dapp note - marketLiquidity, and sponsorEquity can be queried by the front ent
@@ -22,10 +24,10 @@ type Market @entity {
     blockNumber: BigInt!        # block number the market is updated to, which is the last block a trade on this market occurred
     interestRateModel: Bytes!   # address of the interestRateModel contract
     totalSupply: BigInt!        # includes all decimal points. Usually 10^-18, but not always, depends on how many decimal places the asset has
-    supplyRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18
+    perBlockSupplyInterest: BigInt! # to get APR(annual percentage rate) : perBlockSupplyInterest * 2102400 * 10 ^-18
     supplyIndex: BigInt!        # The history of the markets supplyindex return since inception. (Think S&P 500)
     totalBorrows: BigInt!       # includes all decimal points. Usually 10^-18, but not always
-    borrowRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18, but not always, depends on how many decimal places the asset has
+    perBlockBorrowInterest: BigInt! # to get APR : perBlockBorrowInterest * 2102400 * 10 ^-18, but not always, depends on how many decimal places the asset has
     borrowIndex: BigInt!        # The history of the markets borrow index return since inception. (Think S&P 500)
 
     # From PriceOracle.sol
@@ -41,11 +43,11 @@ type User @entity {
 type Asset @entity {
     id: ID!                             # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.......)
     user: Bytes!                        # user address for derived relationships
-    supplyPrincipal: BigInt
+    supplyPrincipal: BigInt             # total amount the user has supplied in this market
     supplyInterestLastChange: BigInt    # is only updated to the last emitted event (SupplyReceived or SupplyWithdrawn). i.e. Per block interest accumlation isn't saved in the subgraph, since the blockchain also does not store this.
     totalSupplyInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (denominated in token, i.e. 1000 DAI)
     supplyInterestIndex: BigInt         # The users personal return in supplying the asset (5.23% would be 1.05230 * 10^18)
-    borrowPrincipal: BigInt
+    borrowPrincipal: BigInt             # total amount the user has borrowed in this market
     borrowInterestLastChange: BigInt    # is only updated to the last event, event BorrowTaken and event BorrowRepaid. i.e. Per block interest isn't saved, since the blockchain also does not store this.
     totalBorrowInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (denominated in token, i.e. 1000 DAI)
     borrowInterestIndex: BigInt         # The users personal total return in borrowing this asset
