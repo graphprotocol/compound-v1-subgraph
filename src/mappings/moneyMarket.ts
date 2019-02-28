@@ -24,11 +24,7 @@ import {
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
-  let user = User.load(id)
-  if (user == null) {
-    user = new User(id)
-  }
-
+  let user = new User(id)
   user.save()
 
   let assetAddress = event.params.asset
@@ -56,7 +52,7 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   asset.transactionHashes = txHashes
 
   let txTimes = asset.transactionTimes
-  txHashes.push(event.block.timestamp.toI32())
+  txTimes.push(event.block.timestamp.toI32())
   asset.transactionTimes = txTimes
 
   // need to get the supplyInterestIndex, so we call the contract directly with MoneyMarket.bind()
@@ -90,7 +86,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
-  
+
   asset.user = event.params.account
   asset.supplyPrincipal = event.params.newBalance
 
@@ -104,7 +100,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   asset.transactionHashes = txHashes
 
   let txTimes = asset.transactionTimes
-  txHashes.push(event.block.timestamp.toI32())
+  txTimes.push(event.block.timestamp.toI32())
   asset.transactionTimes = txTimes
 
   // need to get the supplyInterestIndex
@@ -153,7 +149,7 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   asset.transactionHashes = txHashes
 
   let txTimes = asset.transactionTimes
-  txHashes.push(event.block.timestamp.toI32())
+  txTimes.push(event.block.timestamp.toI32())
   asset.transactionTimes = txTimes
 
   // need to get the borrowInterestIndex
@@ -199,7 +195,7 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
   asset.transactionHashes = txHashes
 
   let txTimes = asset.transactionTimes
-  txHashes.push(event.block.timestamp.toI32())
+  txTimes.push(event.block.timestamp.toI32())
   asset.transactionTimes = txTimes
 
   // need to get the borrowInterestIndex
@@ -239,7 +235,7 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
   let borrowAssetTargetAccountID = borrowAssetName.concat("-".concat(event.params.targetAccount.toHex()))
 
   // access contract storage - borrowBalances[targetAccount][event.params.assetBorrow]
-  let borrowAssetTarget = Asset.load(borrowAssetTargetAccountID)
+  let borrowAssetTarget = new Asset(borrowAssetTargetAccountID)
   let updatedBorrowTargetBalance = moneyMarketContract.borrowBalances(event.params.targetAccount, event.params.assetBorrow)
   let updatedBorrowAssetTargetPrincipal = updatedBorrowTargetBalance.value0
   let updatedBorrowAssetTargetInterestIndex = updatedBorrowTargetBalance.value1
@@ -252,7 +248,7 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
   let collateralAssetTargetAccountID = collateralAssetName.concat("-".concat(event.params.targetAccount.toHex()))
 
   // access contract storage - supplyBalances[targetAccount][event.params.assetCollateral]
-  let collateralAssetTarget = Asset.load(collateralAssetTargetAccountID)
+  let collateralAssetTarget = new Asset(collateralAssetTargetAccountID)
   let updatedCollateralSupplyTargetBalance = moneyMarketContract.supplyBalances(event.params.targetAccount, event.params.assetCollateral)
   let updatedCollateralSupplyTargetPrincipal = updatedCollateralSupplyTargetBalance.value0
   let updatedCollateralSupplyTargetInterestIndex = updatedCollateralSupplyTargetBalance.value1
@@ -359,64 +355,47 @@ export function handleSupportedMarket(event: SupportedMarket): void {
 
   // On Rinkeby, this needs to be created, since handleNewOriginationFee and handleNewRiskParameters are never called
   // Conceivable on future launched markets too
-  let moneyMarket = MoneyMarketEntity.load("1")
-  if (moneyMarket == null) {
-    moneyMarket = new MoneyMarketEntity("1")
-    let moneyMarketContract = MoneyMarket.bind(event.address)
-    moneyMarket.originationFee = moneyMarketContract.originationFee()
-    moneyMarket.collateralRatio = moneyMarketContract.collateralRatio()
-    moneyMarket.liquidationDiscount = moneyMarketContract.liquidationDiscount()
-    moneyMarket.blocksPerYear = 2102400
-    moneyMarket.save()
-  }
+  let moneyMarket = new MoneyMarketEntity("1")
+  let moneyMarketContract = MoneyMarket.bind(event.address)
+  moneyMarket.originationFee = moneyMarketContract.originationFee()
+  moneyMarket.collateralRatio = moneyMarketContract.collateralRatio()
+  moneyMarket.liquidationDiscount = moneyMarketContract.liquidationDiscount()
+  moneyMarket.blocksPerYear = 2102400
+  moneyMarket.save()
+
 
 }
 
 export function handleSuspendedMarket(event: SuspendedMarket): void {
   let id = event.params.asset.toHex()
-  let market = Market.load(id)
-
+  let market = new Market(id)
   market.isSuspended = true
-
   market.save()
 }
 
 export function handleNewRiskParameters(event: NewRiskParameters): void {
   let id = "1" // we only have one MoneyMarket, so just use id "1"
-  let moneyMarket = MoneyMarketEntity.load(id)
-  if (moneyMarket == null) {
-    moneyMarket = new MoneyMarketEntity(id)
-    moneyMarket.originationFee = BigInt.fromI32(0)
-    moneyMarket.blocksPerYear = 2102400
-
-  }
-
+  let moneyMarket = new MoneyMarketEntity(id)
+  moneyMarket.originationFee = BigInt.fromI32(0)
+  moneyMarket.blocksPerYear = 2102400
   moneyMarket.collateralRatio = event.params.newCollateralRatioMantissa
   moneyMarket.liquidationDiscount = event.params.newLiquidationDiscountMantissa
-
   moneyMarket.save()
 }
 
 export function handleNewOriginationFee(event: NewOriginationFee): void {
   let id = "1"
-  let moneyMarket = MoneyMarketEntity.load(id)
-  if (moneyMarket == null) {
-    moneyMarket = new MoneyMarketEntity(id)
-    moneyMarket.collateralRatio = BigInt.fromI32(0)
-    moneyMarket.liquidationDiscount = BigInt.fromI32(0)
-    moneyMarket.blocksPerYear = 2102400
-  }
-
+  let moneyMarket = new MoneyMarketEntity(id)
+  moneyMarket.collateralRatio = BigInt.fromI32(0)
+  moneyMarket.liquidationDiscount = BigInt.fromI32(0)
+  moneyMarket.blocksPerYear = 2102400
   moneyMarket.originationFee = event.params.newOriginationFeeMantissa
-
   moneyMarket.save()
 }
 
 export function handleSetMarketInterestRateModel(event: SetMarketInterestRateModel): void {
   let id = event.params.asset.toHex()
-  let market = Market.load(id)
-
+  let market = new Market(id)
   market.interestRateModel = event.params.interestRateModel
-
   market.save()
 }
