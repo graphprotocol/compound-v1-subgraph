@@ -6,7 +6,7 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: MoneyMarket
-    network: mainnet
+    network: rinkeby
     source:
       address: '0x3FDA67f7583380E67ef93072294a7fAc882FD7E7' # Mainnet: 0x3FDA67f7583380E67ef93072294a7fAc882FD7E7 Rinkeby: 0x61bbd7bd5ee2a202d7e62519750170a52a8dfd45
       abi: MoneyMarket
@@ -44,6 +44,27 @@ dataSources:
           handler: handleNewOriginationFee
         - event: SetMarketInterestRateModel(address,address)
           handler: handleSetMarketInterestRateModel
+  - kind: ethereum/contract
+    name: PriceOracle
+    network: rinkeby
+    source:
+      address: '0x02557a5e05defeffd4cae6d83ea3d173b272c904' # Mainnet: 0x02557a5e05defeffd4cae6d83ea3d173b272c904 Rinkeby:
+      abi: PriceOracle
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.1
+      language: wasm/assemblyscript
+      file: ./src/mappings/priceOracle.ts
+      entities:
+        - Market
+      abis:
+        - name: PriceOracle
+          file: ./abis/priceOracle.json
+      eventHandlers:
+        - event: PricePosted(address,uint256,uint256,uint256)
+          handler: handlePricePosted
+        - event: CappedPricePosted(address,uint256,uint256,uint256)
+          handler: handleCappedPricePosted
 
 
 

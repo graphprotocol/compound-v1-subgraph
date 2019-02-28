@@ -15,7 +15,7 @@ type MoneyMarket @entity {
 # Dapp note - marketLiquidity, and sponsorEquity can be queried by the front ent
 # Note that the supplyRateMantissa and borrowRateMantissa are the per block return on an asset borrowed/supplied
 type Market @entity {
-    id: ID!                     # asset address
+    id: ID!                     # asset address (i.e. actual token address)
     assetName: String!
     isSupported: Boolean!
     isSuspended: Boolean!       # not part of main contract storage, must get from event SuspendedMarket (note, has not been emitted on mainnet)
@@ -28,6 +28,8 @@ type Market @entity {
     borrowRateMantissa: BigInt! # to get APR : supplyRateMantissa * 2102400 * 10 ^-18, but not always, depends on how many decimal places the asset has
     borrowIndex: BigInt!        # The history of the markets borrow index return since inception. (Think S&P 500)
 
+    # From PriceOracle.sol
+    priceInWei: BigInt!              # price is w.r.t. Wei. So If Ether is $150 USD, one Dai would be 1/150 * 10^18
 }
 
 type User @entity {
@@ -35,17 +37,17 @@ type User @entity {
     assets: [Asset!]! @derivedFrom(field: "user")   # derivedFrom will allow all Asset entities to show up for the User
 }
 
-# An Asset represents a User's ownership of the asset in on of the Markets
+# An Asset represents a User's ownership of the asset in one of the Markets
 type Asset @entity {
     id: ID!                             # concatenation of the asset name and user eth address (i.e. DAI-0xdA5d.......)
     user: Bytes!                        # user address for derived relationships
     supplyPrincipal: BigInt
     supplyInterestLastChange: BigInt    # is only updated to the last emitted event (SupplyReceived or SupplyWithdrawn). i.e. Per block interest accumlation isn't saved in the subgraph, since the blockchain also does not store this.
-    totalSupplyInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (recorded in value, i.e. 1000 DAI)
+    totalSupplyInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (denominated in token, i.e. 1000 DAI)
     supplyInterestIndex: BigInt         # The users personal return in supplying the asset (5.23% would be 1.05230 * 10^18)
     borrowPrincipal: BigInt
     borrowInterestLastChange: BigInt    # is only updated to the last event, event BorrowTaken and event BorrowRepaid. i.e. Per block interest isn't saved, since the blockchain also does not store this.
-    totalBorrowInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (actual asset value, i.e. 1000 DAI)
+    totalBorrowInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (denominated in token, i.e. 1000 DAI)
     borrowInterestIndex: BigInt         # The users personal total return in borrowing this asset
     transactionHashes: [Bytes!]!        # Dapp has each users transactions shown to them , so this is included
 }

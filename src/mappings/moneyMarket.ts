@@ -300,6 +300,7 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   market.totalBorrows = BigInt.fromI32(0)
   market.borrowRateMantissa = BigInt.fromI32(0)
   market.borrowIndex = BigInt.fromI32(0)
+  market.priceInWei = BigInt.fromI32(0)
 
   // First check if it is the mainnet address
   if (event.address.toHex() == "0x3fda67f7583380e67ef93072294a7fac882fd7e7") {
