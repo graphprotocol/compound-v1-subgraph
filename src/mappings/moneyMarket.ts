@@ -28,7 +28,7 @@ export function handleSupplyReceived(event: SupplyReceived): void {
 
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
-  let assetName = market.assetName
+  let assetName = market.assetTicker
   let assetUserID = assetName.concat("-".concat(id))
 
   // Must load the asset, and create it if it doesn't exist yet
@@ -88,7 +88,7 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
 
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
-  let assetName = market.assetName
+  let assetName = market.assetTicker
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
@@ -143,7 +143,7 @@ export function handleBorrowTaken(event: BorrowTaken): void {
 
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
-  let assetName = market.assetName
+  let assetName = market.assetTicker
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
@@ -198,7 +198,7 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
 
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
-  let assetName = market.assetName
+  let assetName = market.assetTicker
   let assetUserID = assetName.concat("-".concat(id))
 
   let asset = Asset.load(assetUserID)
@@ -258,7 +258,7 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
 
   ///// UPDATING USER ASSETS BELOW /////
 
-  let borrowAssetName = borrowMarket.assetName
+  let borrowAssetName = borrowMarket.assetTicker
   let borrowAssetTargetAccountID = borrowAssetName.concat("-".concat(event.params.targetAccount.toHex()))
 
   // access contract storage - borrowBalances[targetAccount][event.params.assetBorrow]
@@ -271,7 +271,7 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
 
   borrowAssetTarget.save()
 
-  let collateralAssetName = collateralMarket.assetName
+  let collateralAssetName = collateralMarket.assetTicker
   let collateralAssetTargetAccountID = collateralAssetName.concat("-".concat(event.params.targetAccount.toHex()))
 
   // access contract storage - supplyBalances[targetAccount][event.params.assetCollateral]
@@ -361,34 +361,34 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   // First check if it is the mainnet address
   if (event.address.toHex() == "0x3fda67f7583380e67ef93072294a7fac882fd7e7") {
     if (id == "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359") {
-      market.assetName = "DAI"
+      market.assetTicker = "DAI"
     } else if (id == "0x1985365e9f78359a9b6ad760e32412f4a445e862") {
-      market.assetName = "REP"
+      market.assetTicker = "REP"
     } else if (id == "0x0d8775f648430679a709e98d2b0cb6250d2887ef") {
-      market.assetName = "BAT"
+      market.assetTicker = "BAT"
     } else if (id == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") {
-      market.assetName = "WETH"
+      market.assetTicker = "WETH"
     } else if (id == "0xe41d2489571d322189246dafa5ebde1f4699f498") {
-      market.assetName = "ZRX"
+      market.assetTicker = "ZRX"
     } else {
-      market.assetName = "Unknown".concat('-').concat(event.address.toHex()) // concatenation of unknown and address, so they don't overwrite each other
+      market.assetTicker = "Unknown".concat('-').concat(event.address.toHex()) // concatenation of unknown and address, so they don't overwrite each other
     }
     // Else it is Rinkeby, and must match the rinkeby addresses
   } else {
     if (id == "0x4e17c87c52d0e9a0cad3fbc53b77d9514f003807") {
-      market.assetName = "DAI"
+      market.assetTicker = "DAI"
     } else if (id == "0x930b647320f738d92f5647b2e5c4458497ce3c95") {
-      market.assetName = "REP"
+      market.assetTicker = "REP"
     } else if (id == "0xbf7bbeef6c56e53f79de37ee9ef5b111335bd2ab") {
-      market.assetName = "BAT"
+      market.assetTicker = "BAT"
     } else if (id == "0xc778417e063141139fce010982780140aa0cd5ab") {
-      market.assetName = "WETH"
+      market.assetTicker = "WETH"
     } else if (id == "0x8de2f821bc97979b7171e7a6fe065b9e17f73b87") {
-      market.assetName = "ZRX"
+      market.assetTicker = "ZRX"
     } else if (id == "0x55080ac40700bde5725d8a87f48a01e192f660af") {
-      market.assetName = "KNC" // Note, rinkeby has KyberNetworkCrystal, but it doesn't show up in the Dapp UI
+      market.assetTicker = "KNC" // Note, rinkeby has KyberNetworkCrystal, but it doesn't show up in the Dapp UI
     } else {
-      market.assetName = "Unknown".concat('-').concat(event.address.toHex())
+      market.assetTicker = "Unknown".concat('-').concat(event.address.toHex())
     }
   }
   market.save()

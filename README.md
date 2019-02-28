@@ -72,16 +72,14 @@ Now that the subgraph is running you may open a [Graphiql](https://github.com/gr
 This subgraph has already been deploy to the hosted service, and you can see it under on [The Graph Explorer](https://thegraph.com/explorer/). To understand how deploying to the hosted service works, check out the [Deploying Instructions](https://thegraph.com/docs/deploy-a-subgraph) in the official documentation. The most important part of deploying to the hosted service is ensuring that the npm script for `deploy` is updated to the correct name that you want to deploy with. 
 
 ## Querying the subgraph
-The query below shows all the information that is possible to query, with a few filters. There are many other filtering options that can be used, just check out the [querying api](https://github.com/graphprotocol/graph-node/blob/master/docs/graphql-api.md).
+The query below shows some useful queries, with a few filters. There are many other filtering options that can be used, just check out the [querying api](https://github.com/graphprotocol/graph-node/blob/master/docs/graphql-api.md).
 
+### Markets
+To get a list of all the Markets within the Compound app, you can use the following query, ordered by asset name
 ```graphql
+
 {
-  moneyMarkets{
-    collateralRatioMantissa
-    liquidationDiscountMantissa
-    originationFeeMantissa
-  }
-  markets(orderBy: assetName){
+  markets(orderBy: assetName) {
     id
     assetName
     isSupported
@@ -89,15 +87,24 @@ The query below shows all the information that is possible to query, with a few 
     blockNumber
     interestRateModel
     totalSupply
-    supplyRateMantissa
+    perBlockSupplyInterest
+    priceInWei
     supplyIndex
     totalBorrows
-    borrowRateMantissa
+    perBlockBorrowInterest
     borrowIndex
   }
-  users(first: 5){
+}
+```
+You can also query users! This query will return the top 10 users that have the lowest account liquidity. This could be useful for monitoring accounts to liquidate and earn fees with the liquidation discount. 
+```graphql
+{
+  users(first: 10, orderBy: accountLiquidity, orderDirection: asc) {
     id
-    assets{
+    accountLiquidity
+    totalSupplyInEth
+    totalBorrowInEth
+    assets {
       id
       user
       supplyPrincipal
@@ -109,10 +116,10 @@ The query below shows all the information that is possible to query, with a few 
       totalBorrowInterest
       borrowInterestIndex
       transactionHashes
+      transactionTimes
     }
   }
 }
-
 ```
 The command above can be copy pasted into the Graphiql interface in your browser at `127.0.0.1:8000`.
 

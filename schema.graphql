@@ -18,7 +18,7 @@ type MoneyMarket @entity {
 # Note that the supplyRateMantissa and borrowRateMantissa are the per block return on an asset borrowed/supplied
 type Market @entity {
     id: ID!                     # asset address (i.e. actual token address)
-    assetName: String!
+    assetTicker: String!
     isSupported: Boolean!
     isSuspended: Boolean!       # not part of main contract storage, must get from event SuspendedMarket (note, has not been emitted on mainnet)
     blockNumber: BigInt!        # block number the market is updated to, which is the last block a trade on this market occurred
