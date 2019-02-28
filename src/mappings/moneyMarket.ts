@@ -24,8 +24,7 @@ import {
 
 export function handleSupplyReceived(event: SupplyReceived): void {
   let id = event.params.account.toHex()
-  let user = new User(id)
-  user.save()
+
 
   let assetAddress = event.params.asset
   let market = Market.load(assetAddress.toHex())
@@ -74,6 +73,10 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   market.borrowIndex = updatedMarket.value8
 
   market.save()
+
+  let user = new User(id)
+  user.accountLiquidity = marketContract.getAccountLiquidity(event.params.account)
+  user.save()
 }
 
 
@@ -109,6 +112,10 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   asset.supplyInterestIndex = supplyBalance.value1
 
   asset.save()
+
+  let user = new User(id)
+  user.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.account)
+  user.save()
 
   // Call into the contract getter and update market
   let marketContract = MoneyMarket.bind(event.address)
@@ -159,6 +166,10 @@ export function handleBorrowTaken(event: BorrowTaken): void {
 
   asset.save()
 
+  let user = new User(id)
+  user.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.account)
+  user.save()
+
   // Call into the contract getter and update market
   let marketContract = MoneyMarket.bind(event.address)
   let updatedMarket = marketContract.markets(assetAddress)
@@ -204,6 +215,10 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
   asset.borrowInterestIndex = borrowBalance.value1
 
   asset.save()
+
+  let user = new User(id)
+  user.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.account)
+  user.save()
 
   // Call into the contract getter and update market
   let marketContract = MoneyMarket.bind(event.address)
@@ -257,6 +272,10 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
 
   collateralAssetTarget.save()
 
+  let targetUser = new User(event.params.targetAccount.toHex())
+  targetUser.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.targetAccount)
+  targetUser.save()
+
   let collateralAssetLiquidatorAccountID = collateralAssetName.concat("-".concat(event.params.liquidator.toHex()))
 
   // access contract storage - supplyBalances[event.params.liquidator][event.params.assetCollateral]
@@ -275,6 +294,10 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
   collateralAssetLiquidator.supplyInterestIndex = updatedCollateralSupplyLiquidatorInterestIndex
 
   collateralAssetLiquidator.save()
+
+  let liquidatorUser = new User(event.params.liquidator.toHex())
+  liquidatorUser.accountLiquidity = moneyMarketContract.getAccountLiquidity(event.params.liquidator)
+  liquidatorUser.save()
 
   ///// UPDATING MARKETS BELOW /////
 
@@ -352,7 +375,6 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   }
   market.save()
 
-
   // On Rinkeby, this needs to be created, since handleNewOriginationFee and handleNewRiskParameters are never called
   // Conceivable on future launched markets too
   let moneyMarket = new MoneyMarketEntity("1")
@@ -362,8 +384,6 @@ export function handleSupportedMarket(event: SupportedMarket): void {
   moneyMarket.liquidationDiscount = moneyMarketContract.liquidationDiscount()
   moneyMarket.blocksPerYear = 2102400
   moneyMarket.save()
-
-
 }
 
 export function handleSuspendedMarket(event: SuspendedMarket): void {

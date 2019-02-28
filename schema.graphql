@@ -37,6 +37,7 @@ type Market @entity {
 type User @entity {
     id: ID!                                         # user eth address
     assets: [Asset!]! @derivedFrom(field: "user")   # derivedFrom will allow all Asset entities to show up for the User
+    accountLiquidity: BigInt
 }
 
 # An Asset represents a User's ownership of the asset in one of the Markets
