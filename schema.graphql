@@ -52,6 +52,7 @@ type Asset @entity {
     totalBorrowInterest: BigInt         # adds together each round of borrowed asset, to record a cumulative amount, since it isn't stored anywhere in the smart contract (denominated in token, i.e. 1000 DAI)
     borrowInterestIndex: BigInt         # The users personal total return in borrowing this asset
     transactionHashes: [Bytes!]!        # Dapp has each users transactions shown to them , so this is included
+    transactionTimes: [Int!]!
 }
 
 

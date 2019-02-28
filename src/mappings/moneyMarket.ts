@@ -41,6 +41,7 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   if (asset == null) {
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
+    asset.transactionTimes = []
   }
 
   asset.user = event.params.account
@@ -53,6 +54,10 @@ export function handleSupplyReceived(event: SupplyReceived): void {
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
+
+  let txTimes = asset.transactionTimes
+  txHashes.push(event.block.timestamp.toI32())
+  asset.transactionTimes = txTimes
 
   // need to get the supplyInterestIndex, so we call the contract directly with MoneyMarket.bind()
   let moneyMarketContract = MoneyMarket.bind(event.address)
@@ -98,6 +103,10 @@ export function handleSupplyWithdrawn(event: SupplyWithdrawn): void {
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
 
+  let txTimes = asset.transactionTimes
+  txHashes.push(event.block.timestamp.toI32())
+  asset.transactionTimes = txTimes
+
   // need to get the supplyInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
   let supplyBalance = moneyMarketContract.supplyBalances(event.params.account, assetAddress)
@@ -132,6 +141,7 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   if (asset == null) {
     asset = new Asset(assetUserID)
     asset.transactionHashes = []
+    asset.transactionTimes = []
   }
   asset.user = event.params.account
   asset.borrowPrincipal = event.params.newBalance
@@ -141,6 +151,10 @@ export function handleBorrowTaken(event: BorrowTaken): void {
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
+
+  let txTimes = asset.transactionTimes
+  txHashes.push(event.block.timestamp.toI32())
+  asset.transactionTimes = txTimes
 
   // need to get the borrowInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
@@ -183,6 +197,10 @@ export function handleBorrowRepaid(event: BorrowRepaid): void {
   let txHashes = asset.transactionHashes
   txHashes.push(event.transaction.hash)
   asset.transactionHashes = txHashes
+
+  let txTimes = asset.transactionTimes
+  txHashes.push(event.block.timestamp.toI32())
+  asset.transactionTimes = txTimes
 
   // need to get the borrowInterestIndex
   let moneyMarketContract = MoneyMarket.bind(event.address)
@@ -252,6 +270,7 @@ export function handleBorrowLiquidated(event: BorrowLiquidated): void {
   if (collateralAssetLiquidator == null) {
     collateralAssetLiquidator = new Asset(collateralAssetLiquidatorAccountID)
     collateralAssetLiquidator.transactionHashes = []
+    collateralAssetLiquidator.transactionTimes = []
   }
   let updatedCollateralSupplyLiquidatorBalance = moneyMarketContract.supplyBalances(event.params.liquidator, event.params.assetCollateral)
   let updatedCollateralSupplyLiquidatorPrincipal = updatedCollateralSupplyLiquidatorBalance.value0
