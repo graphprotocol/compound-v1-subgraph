@@ -17,21 +17,21 @@ type MoneyMarket @entity {
 # Dapp note - marketLiquidity, and sponsorEquity can be queried by the front ent
 # Note that the supplyRateMantissa and borrowRateMantissa are the per block return on an asset borrowed/supplied
 type Market @entity {
-    id: ID!                     # asset address (i.e. actual token address)
+    id: ID!                         # asset address (i.e. actual token address)
     assetTicker: String!
     isSupported: Boolean!
-    isSuspended: Boolean!       # not part of main contract storage, must get from event SuspendedMarket (note, has not been emitted on mainnet)
-    blockNumber: BigInt!        # block number the market is updated to, which is the last block a trade on this market occurred
-    interestRateModel: Bytes!   # address of the interestRateModel contract
-    totalSupply: BigInt!        # includes all decimal points. Usually 10^-18, but not always, depends on how many decimal places the asset has
+    isSuspended: Boolean!           # not part of main contract storage, must get from event SuspendedMarket (note, has not been emitted on mainnet)
+    blockNumber: BigInt!            # block number the market is updated to, which is the last block a trade on this market occurred
+    interestRateModel: Bytes!       # address of the interestRateModel contract
+    totalSupply: BigInt!            # includes all decimal points. Usually 10^-18, but not always, depends on how many decimal places the asset has
     perBlockSupplyInterest: BigInt! # to get APR(annual percentage rate) : perBlockSupplyInterest * 2102400 * 10 ^-18
-    supplyIndex: BigInt!        # The history of the markets supplyindex return since inception. (Think S&P 500)
-    totalBorrows: BigInt!       # includes all decimal points. Usually 10^-18, but not always
+    supplyIndex: BigInt!            # The history of the markets supplyindex return since inception. (Think S&P 500)
+    totalBorrows: BigInt!           # includes all decimal points. Usually 10^-18, but not always
     perBlockBorrowInterest: BigInt! # to get APR : perBlockBorrowInterest * 2102400 * 10 ^-18, but not always, depends on how many decimal places the asset has
-    borrowIndex: BigInt!        # The history of the markets borrow index return since inception. (Think S&P 500)
+    borrowIndex: BigInt!            # The history of the markets borrow index return since inception. (Think S&P 500)
 
     # From PriceOracle.sol
-    priceInWei: BigInt!              # price is w.r.t. Wei. So If Ether is $150 USD, one Dai would be 1/150 * 10^18
+    priceInWei: BigInt!             # price is w.r.t. Wei. So If Ether is $150 USD, one Dai would be 1/150 * 10^18. To get asset prices in USD, divide this by DAIS priceInWei. Dai is obviously ~ $1.00
 }
 
 type User @entity {

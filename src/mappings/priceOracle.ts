@@ -14,7 +14,7 @@ import {
 // small coins worth fractions of a penny, it would round down to 0 and not work. However, we should have more
 // functionality in our BigInt math soon, so we should be able to get rid of this in future iterations of Compound
 // Subgraphs
-let tenPowerFourteen = BigInt.fromI32(10000000).times(BigInt.fromI32(10000000))
+// let tenPowerFourteen = BigInt.fromI32(10000000).times(BigInt.fromI32(10000000))
 
 // NOTE - The events must always trigger a lookup of DAI price, for two reasons.
 // 1. To find the USD value of any other asset
